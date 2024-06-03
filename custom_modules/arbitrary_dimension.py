@@ -279,7 +279,7 @@ if __name__ == "__main__":
     print("n=", solid_angle.numpy(), "(Regularly computed topological number. This may provide a poor result.)")
     print("")
     print("Up-scaling technique started")
-    solid_angle_fine = get_solid_angle_fine(sphere, size=6, ratio=10, use_one_simplex=True)
+    solid_angle_fine = get_solid_angle_fine(sphere, size=5, ratio=10, use_one_simplex=True)
     print("")
     print("n=", solid_angle_fine.numpy(), "(Topological number computed from up-scaled spin configuration. It may provide a better result)")
 
