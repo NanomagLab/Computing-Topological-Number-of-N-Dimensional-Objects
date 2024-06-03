@@ -4,11 +4,9 @@ The code was developed during our research process and may be more complex and h
 It is recommended for advanced users who need to work with data of arbitrary dimensions.
 """
 import tensorflow as tf
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 from math import factorial, gamma
-from scipy.ndimage import zoom
 from itertools import permutations
 
 
@@ -187,13 +185,12 @@ def get_solid_angle(arr, pad=True, use_one_simplex=False):
                 spins,
                 padded[index][..., tf.newaxis]
             ], axis=-1)
-
-        # spins = tf.stack([
-        #     padded[list(map(lambda x: slice(0, -1) if x == 0 else slice(1, None), index))] for index in sequence_index
-        # ], axis=-1)
         solid_angle = solid_angle + tf.linalg.det(spins) * sign
     constant = 2 * np.pi ** (int(N + 1) / 2.) / gamma(int(N + 1) / 2.)
-    return tf.reduce_sum(solid_angle) / constant / factorial(N)
+    solid_angle = tf.reduce_sum(solid_angle) / constant
+    if not use_one_simplex:
+        solid_angle = solid_angle / factorial(N)
+    return solid_angle
 
 
 def slice_arr(arr, size=5):
@@ -217,7 +214,6 @@ def get_solid_angle_fine(arr, size=5, ratio=10, use_one_simplex=True):
     N = shape[-1] - 1
     arr = slice_arr(arr, size=size)
     solid_angle = 0.
-    print("")
     for i, sub_arr in enumerate(arr):
         # sub_arr = zoom(sub_arr, [ratio for _ in range(N)] + [1], order=1)
         # sub_arr = tf.math.l2_normalize(sub_arr, axis=-1)
@@ -262,40 +258,14 @@ if __name__ == "__main__":
     z = np.linspace(-1, 1, size)
     w = np.linspace(-1, 1, size)
     xx, yy, zz, ww = np.meshgrid(x, y, z, w)
-    # xxx,yyy=np.meshgrid(x,y)
-    # yyyy,zzzz=np.meshgrid(y,z)
-    # 3D 토러스 생성
-    # radius = 0.25
-    # c=0.6
-    # spin_mask = (c-np.sqrt(xx**2 + yy**2))**2 + zz**2 <= radius**2
-
-    # 3D 구 생성
+    # 4d ball
     radius = 0.75
     spin_mask = xx ** 2 + yy ** 2 + zz ** 2 + ww ** 2 <= radius ** 2
-    radius2 = 0.5
-    spin_mask2 = xx ** 2 + yy ** 2 + zz ** 2 >= radius2 ** 2
-    spin_mask = spin_mask * spin_mask2
+    spin_mask = spin_mask
 
-    # # 3d 손잡이
-    # def get_3d_grid(sizex, sizey, sizez, initx = 0, inity = 0, initz = 0):
-    #     for x in range(initx, sizex):
-    #         for y in range(inity, sizey):
-    #             for z in range(initz, sizez):
-    #                 yield (x, y, z)
-    #
     spin_data = np.zeros((size, size, size, size, 5))
     spin_data = spin_data - 1
     spin_data[spin_mask, :] = +1
-    # spin_data[spin_mask3,0:30,:] = +1
-    #
-    # spin_data[:,:,0:15,: ]=-1
-    # spin_data[:,:,75:90,: ]=-1
-    # for (x, y, z) in get_3d_grid(size, size, size):
-    #     if (z > 25 and z < 65) and (y > 65 and y < 83) and (x > 40 and x < 50):
-    #         spin_data[x][y][z] = [0, 0, 0, 1]
-    #     if (z > 35 and z < 55) and (y > 65 and y < 75) and (x > 40 and x < 50):
-    #         spin_data[x][y][z] = [0, 0, 0, -1]
-
     spin_data[:, :, :, : 0:4] = 0.
 
     sphere = spin_data.astype(np.float32)
@@ -306,10 +276,10 @@ if __name__ == "__main__":
     plt.show()
     print("init_cond complete")
     solid_angle = get_solid_angle(sphere, use_one_simplex=False)
-    print("n=", solid_angle.numpy(), "(Regularly computed topological number. It might show a poor result.)")
-
+    print("n=", solid_angle.numpy(), "(Regularly computed topological number. This may provide a poor result.)")
+    print("")
     print("Up-scaling technique started")
     solid_angle_fine = get_solid_angle_fine(sphere, size=6, ratio=10, use_one_simplex=True)
     print("")
-    print("n=", solid_angle_fine.numpy(), "(Topological number computed from Up-scaled spin configuration. It might show a better result)")
+    print("n=", solid_angle_fine.numpy(), "(Topological number computed from up-scaled spin configuration. It may provide a better result)")
 

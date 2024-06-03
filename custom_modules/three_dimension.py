@@ -66,11 +66,12 @@ def evolve(arr, alpha=0.15):
 
 def gray_to_spin(arr, alpha=0.2, steps=20):
     """
-    :param arr: array of shape (x, y, z, 4)
+    :param arr: array of shape (x, y, z, 1)
     :param alpha: float
     :param steps: int
     :return:  array of shape (x, y, z, 4)
     """
+    arr = tf.concat([tf.zeros_like(arr), tf.zeros_like(arr), tf.zeros_like(arr), arr], axis=-1)
     for i in range(steps):
         evolve(arr, alpha=alpha)
     return arr
@@ -99,4 +100,4 @@ def get_solid_angle_density(arr):
     solid_angle = solid_angle - tf.linalg.det(tf.stack([
         arr[:-1, :-1, :-1], arr[:-1, -1:, 1:], arr[:-1, 1:, 1:], arr[1:, 1:, 1:]
     ], axis=-1))
-    return solid_angle
+    return solid_angle / 6.
