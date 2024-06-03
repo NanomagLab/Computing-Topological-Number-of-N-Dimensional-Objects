@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 from matplotlib import pyplot as plt
 from custom_module import gray_to_spin_2d, get_topological_number_2d
+from custom_module.two_dimension import gray_to_spin, get_topological_number
 
 # load_examples
 examples = [Image.open("examples/2d/" + path, 'r') for path in os.listdir("examples/2d")]
