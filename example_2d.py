@@ -58,18 +58,17 @@ def spin2rgb(X):
     img = np.concatenate((H, S, V), axis=-1)
     for i, map in enumerate(img): img[i] = hsv2rgb(map)
     return img
-
 # load_examples
 examples = [Image.open("examples/2d/" + path, 'r') for path in os.listdir("examples/2d")]
 examples = [-np.array(x).astype(np.float32)[..., :1] * 2. / 255. + 1. for x in examples]
+
 # convert the gray image to spin
 spins = [gray_to_spin_2d(example) for example in examples]
-
 # compute the skyrmion number
 solid_angle_densities = [get_solid_angle_density_2d(spin) for spin in spins]
 topological_numbers = [tf.reduce_sum(solid_angle_density, axis=(0, 1)) / np.pi / 4. for solid_angle_density in solid_angle_densities]
 
-fig, axes = plt.subplots(2, len(examples),  figsize=(len(examples) * 1.5,4))
+fig, axes = plt.subplots(2, len(examples),  figsize=(len(examples) * 2,4))
 for i in range(len(examples)):
     axes[0][i].imshow(examples[i])
     axes[0][i].axis('off')
