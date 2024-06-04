@@ -1,7 +1,7 @@
 import numpy as np
 """ball"""
 gird_size = 200
-radius = 0.7
+radius = 0.6
 x, y, z = np.meshgrid(
     np.linspace(-1, 1, gird_size),
     np.linspace(-1, 1, gird_size),
@@ -13,8 +13,8 @@ np.save("3d/ball.npy", arr)
 
 """shell"""
 gird_size = 200
-inner_radius = 0.6
-outer_radius = 0.8
+inner_radius = 0.25
+outer_radius = 0.6
 x, y, z = np.meshgrid(
     np.linspace(-1, 1, gird_size),
     np.linspace(-1, 1, gird_size),
