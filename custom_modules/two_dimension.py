@@ -77,6 +77,6 @@ def get_solid_angle_density_2d(arr):
     :param arr: array of shape (height, width, 3)
     :return:  array of shape (height, width)
     """
-    solid_angle = tf.linalg.det(tf.stack([arr[:-1, :-1], arr[1:, :-1], arr[:-1, 1:]], axis=-1))
+    solid_angle = tf.linalg.det(tf.stack([arr[:-1, :-1], arr[1:, :-1], arr[1:, 1:]], axis=-1))
     solid_angle = solid_angle - tf.linalg.det(tf.stack([arr[:-1, :-1], arr[:-1, 1:], arr[1:, 1:]], axis=-1))
     return solid_angle / 2.
