@@ -64,7 +64,7 @@ def evolve(arr, alpha=0.15):
     return tf.math.l2_normalize(exchange_field + dm_field, axis=-1)
 
 
-def gray_to_spin(arr, alpha=0.2, steps=20):
+def gray_to_spin_3d(arr, alpha=0.1, steps=100):
     """
     :param arr: array of shape (x, y, z, 1)
     :param alpha: float
@@ -73,31 +73,31 @@ def gray_to_spin(arr, alpha=0.2, steps=20):
     """
     arr = tf.concat([tf.zeros_like(arr), tf.zeros_like(arr), tf.zeros_like(arr), arr], axis=-1)
     for i in range(steps):
-        evolve(arr, alpha=alpha)
+        arr=evolve(arr, alpha=alpha)
     return arr
 
 
-def get_solid_angle_density(arr):
+def get_solid_angle_density_3d(arr):
     """
     :param arr: array of shape (x, y, z, 4)
     :return:  array of shape (x, y, z)
     """
-    solid_angle = tf.linalg.det(tf.stack([
+    solid_angle = -tf.linalg.det(tf.stack([
         arr[:-1, :-1, :-1], arr[1:, :-1, :-1], arr[1:, 1:, :-1], arr[1:, 1:, 1:]
     ], axis=-1))
-    solid_angle = solid_angle - tf.linalg.det(tf.stack([
+    solid_angle = solid_angle + tf.linalg.det(tf.stack([
         arr[:-1, :-1, :-1], arr[1:, :-1, :-1], arr[1:, :-1, 1:], arr[1:, 1:, 1:]
     ], axis=-1))
-    solid_angle = solid_angle - tf.linalg.det(tf.stack([
+    solid_angle = solid_angle + tf.linalg.det(tf.stack([
         arr[:-1, :-1, :-1], arr[:-1, 1:, :-1], arr[1:, 1:, :-1], arr[1:, 1:, 1:]
     ], axis=-1))
-    solid_angle = solid_angle + tf.linalg.det(tf.stack([
+    solid_angle = solid_angle - tf.linalg.det(tf.stack([
         arr[:-1, :-1, :-1], arr[:-1, 1:, :-1], arr[:-1, 1:, 1:], arr[1:, 1:, 1:]
     ], axis=-1))
-    solid_angle = solid_angle + tf.linalg.det(tf.stack([
+    solid_angle = solid_angle - tf.linalg.det(tf.stack([
         arr[:-1, :-1, :-1], arr[:-1, :-1, 1:], arr[1:, :-1, 1:], arr[1:, 1:, 1:]
     ], axis=-1))
-    solid_angle = solid_angle - tf.linalg.det(tf.stack([
-        arr[:-1, :-1, :-1], arr[:-1, -1:, 1:], arr[:-1, 1:, 1:], arr[1:, 1:, 1:]
+    solid_angle = solid_angle + tf.linalg.det(tf.stack([
+        arr[:-1, :-1, :-1], arr[:-1, :-1, 1:], arr[:-1, 1:, 1:], arr[1:, 1:, 1:]
     ], axis=-1))
     return solid_angle / 6.
