@@ -1,6 +1,6 @@
 import numpy as np
 """ball"""
-gird_size = 200
+gird_size = 184
 radius = 0.6
 x, y, z = np.meshgrid(
     np.linspace(-1, 1, gird_size),
@@ -12,8 +12,8 @@ arr = np.greater(radius, r).astype(np.float32) * 2. - 1.
 np.save("3d/ball.npy", arr)
 
 """shell"""
-gird_size = 200
-inner_radius = 0.25
+gird_size = 184
+inner_radius = 0.2
 outer_radius = 0.6
 x, y, z = np.meshgrid(
     np.linspace(-1, 1, gird_size),
@@ -25,7 +25,7 @@ arr = (np.greater(r, inner_radius) * np.greater(outer_radius, r)).astype(np.floa
 np.save("3d/shell.npy", arr)
 
 """doughnut"""
-gird_size = 200
+gird_size = 184
 major_radius = 0.4
 minor_radius = 0.2
 x, y, z = np.meshgrid(
