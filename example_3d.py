@@ -73,27 +73,27 @@ fig, axes = plt.subplots(3, len(examples)*2,  figsize=(len(examples) * 4, 6))
 axis=[" \nviews of xy plane", " \nviews of xz plane", " \nviews of yz plane"]
 
 for i in range(len(examples)):
-    axes[0][i*2].imshow(examples[i][:,:,100,-1])
+    axes[0][i*2].imshow(examples[i][:,:,92,-1])
     axes[0][i*2].axis('off')
     axes[0][i*2].set_title(os.listdir("examples/3d")[i]+axis[0])
 
-    axes[0][2*i+1].imshow(spin2rgb(spins[i][:,:,100,:3]))
+    axes[0][2*i+1].imshow(spin2rgb(spins[i][:,:,92,:3]))
     axes[0][2*i+1].axis('off')
     axes[0][2*i+1].set_title("n={:0.2f}".format(topological_numbers[i]), y=-0.2)
 
-    axes[1][i*2].imshow(examples[i][:,100,:,-1])
+    axes[1][i*2].imshow(examples[i][:,92,:,-1])
     axes[1][i*2].axis('off')
     axes[1][i*2].set_title(os.listdir("examples/3d")[i]+axis[1])
 
-    axes[1][2*i+1].imshow(spin2rgb(spins[i][:,100,:,:3]))
+    axes[1][2*i+1].imshow(spin2rgb(spins[i][:,92,:,:3]))
     axes[1][2*i+1].axis('off')
     axes[1][2*i+1].set_title("n={:0.2f}".format(topological_numbers[i]), y=-0.2)
 
-    axes[2][i*2].imshow(examples[i][100,:,:,-1])
+    axes[2][i*2].imshow(examples[i][92,:,:,-1])
     axes[2][i*2].axis('off')
     axes[2][i*2].set_title(os.listdir("examples/3d")[i]+axis[2])
 
-    axes[2][2*i+1].imshow(spin2rgb(spins[i][100,:,:,:3]))
+    axes[2][2*i+1].imshow(spin2rgb(spins[i][92,:,:,:3]))
     axes[2][2*i+1].axis('off')
     axes[2][2*i+1].set_title("n={:0.2f}".format(topological_numbers[i]), y=-0.2)
 
