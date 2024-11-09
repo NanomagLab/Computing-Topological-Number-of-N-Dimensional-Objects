@@ -3,6 +3,8 @@ This file contains the implementation for processing data of arbitrary dimension
 The code was developed during our research process and may be more complex and harder to understand.
 It is recommended for advanced users who need to work with data of arbitrary dimensions.
 """
+from typing import Tuple
+
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -203,8 +205,6 @@ def slice_arr(arr, size=5):
     for indices in np.ndindex(*[shape[0] // size for _ in range(N)]):
         batch = tf.concat([batch, arr[tuple(slice(size * i, size * (i + 1) + 1) for i in indices)][tf.newaxis]], axis=0)
     return batch
-
-
 def get_solid_angle_fine(arr, size=5, ratio=10, use_one_simplex=True):
     """up-scales the input array to get fine topological number"""
     shape = arr.shape
@@ -237,49 +237,108 @@ def get_solid_angle_fine(arr, size=5, ratio=10, use_one_simplex=True):
         print("\r {} / {}".format(i + 1, len(arr)), end="")
     return solid_angle
 
+def get_B4_mask(size: int = 30):
+    space_limit = 1.
+    y_space = tf.transpose(tf.meshgrid(*[tf.linspace(-space_limit, space_limit, size) for i in range(4)]), [1, 2, 3, 4, 0])
+    r = tf.norm(y_space, axis=-1)
+    mask = tf.greater(0.5, r)
+    return mask
+def get_S3_mask(size: int = 30):
+    space_limit = 1.5
+    maximum_distance = space_limit * 4. / float(size - 1)
+    y_space = tf.transpose(tf.meshgrid(*[tf.linspace(-space_limit, space_limit, size) for i in range(4)]), [1, 2, 3, 4, 0])
+    r = tf.norm(y_space, axis=-1)
+    mask = tf.greater(maximum_distance, tf.abs(r - 1.))
+    return mask
+def get_real_projective_plane_mask_4d(size: int = 30) -> Tuple[tf.Tensor, tf.Tensor]:
+    """
+    Implementation of real projective plane with embeded on 4D square lattice.
+    """
+    space_limit = 1.5
+    maximum_distance = space_limit * 4. / float(size - 1)
+    y_space = tf.transpose(tf.meshgrid(*[tf.linspace(-space_limit, space_limit, size) for i in range(4)]), [1, 2, 3, 4, 0])
 
+    def embed_projective_plane(x):
+        theta = x[..., 0]
+        phi = x[..., 1]
+        x1 = tf.sin(theta) * tf.cos(phi)
+        x2 = tf.sin(theta) * tf.sin(phi)
+        x3 = tf.cos(theta)
+        y1 = x1 * x2
+        y2 = x1 * x3
+        y3 = x2 ** 2 - x3 ** 2
+        y4 = x2 * x3 * 2.
+        return tf.stack([y1, y2, y3, y4], axis=-1)
+
+    x_init = tf.zeros((size, size, size, size, 2))
+    x_variable = tf.Variable(x_init)
+    optimizer = tf.optimizers.Adam()
+    for i in range(10000):
+        with tf.GradientTape() as t:
+            y = embed_projective_plane(x_variable)
+            differnece = tf.norm(y - y_space, axis=-1)
+            tf.print("\r", i, "/ 10000   Averaged Distance: ", tf.reduce_mean(differnece).numpy(), end="")
+        gradient = t.gradient(differnece, x_variable)
+        optimizer.apply_gradients([(gradient, x_variable)])
+    print("")
+    x_final = x_variable.read_value()
+    distance_from_the_embedded_surface = tf.norm(embed_projective_plane(x_final) - y_space, axis=-1)
+    mask = tf.cast(tf.greater(maximum_distance, distance_from_the_embedded_surface), tf.float32)
+    return
+def get_klein_bottle_mask_4d(size: int = 30) -> Tuple[tf.Tensor, tf.Tensor]:
+    space_limit = 1.5
+    maximum_distance = space_limit * 4. / float(size - 1)
+    y_space = tf.transpose(tf.meshgrid(*[tf.linspace(-space_limit, space_limit, size) for i in range(4)]), [1, 2, 3, 4, 0])
+    def embed_klein_bottle(x):
+        x1 = x[..., 0]
+        x2 = x[..., 1]
+        y1 = (1. + tf.cos(x1)) * tf.cos(x2) / 2.
+        y2 = (1. + tf.cos(x1)) * tf.sin(x2) / 2.
+        y3 = tf.sin(x1) * tf.cos(x2 / 2.)
+        y4 = tf.sin(x1) * tf.sin(x2 / 2.)
+        return tf.stack([y1, y2, y3, y4], axis=-1)
+    x_init = tf.zeros((size, size, size, size, 2))
+    x_variable = tf.Variable(x_init)
+    optimizer = tf.optimizers.Adam()
+    for i in range(10000):
+        with tf.GradientTape() as t:
+            y = embed_klein_bottle(x_variable)
+            differnece = tf.norm(y - y_space, axis=-1)
+            tf.print("\r", i, "/ 10000   Averaged Distance: ", tf.reduce_mean(differnece).numpy(), end="")
+        gradient = t.gradient(differnece, x_variable)
+        optimizer.apply_gradients([(gradient, x_variable)])
+    print("")
+    x_final = x_variable.read_value()
+    distance_from_the_embedded_surface = tf.norm(embed_klein_bottle(x_final) - y_space, axis=-1)
+    mask = tf.cast(tf.greater(maximum_distance, distance_from_the_embedded_surface), tf.float32)
+    return mask
+def get_object_from_mask(mask):
+    N = len(tf.shape(mask))
+    last_dim = tf.cast(mask, tf.float32) * 2. - 1.
+    full_mapping = tf.stack([tf.zeros_like(last_dim) for i in range(N)] + [last_dim], axis=-1)
+    return full_mapping
+
+    
 if __name__ == "__main__":
-    # List available GPUs
-    gpus = tf.config.experimental.list_physical_devices('GPU')
-    print("GPUs available:", gpus)
+    print("Constructing Object")
+    mask = get_B4_mask() # B4 implemented in 4D square lattice
+    # mask = get_S3_mask() # S3 Hyperspehere implemented in 4D square lattice
+    # mask = get_real_projective_plane_mask_4d() # Real Projective Plane implemented in 4D square lattice
+    # mask = get_klein_bottle_mask_4d() # Klein Bouttle implemented in 4D square lattice
 
-    # Enable memory growth for each GPU
-    if gpus:
-        try:
-            for gpu in gpus:
-                tf.config.experimental.set_memory_growth(gpu, True)
-            print("Memory growth enabled for GPUs")
-        except RuntimeError as e:
-            # Memory growth must be set before any TensorFlow operations
-            print(e)
-    size = 30
-    x = np.linspace(-1, 1, size)
-    y = np.linspace(-1, 1, size)
-    z = np.linspace(-1, 1, size)
-    w = np.linspace(-1, 1, size)
-    xx, yy, zz, ww = np.meshgrid(x, y, z, w)
-    # 4d ball
-    radius = 0.75
-    spin_mask = xx ** 2 + yy ** 2 + zz ** 2 + ww ** 2 <= radius ** 2
-    spin_mask = spin_mask
+    object = get_object_from_mask(mask)
 
-    spin_data = np.zeros((size, size, size, size, 5))
-    spin_data = spin_data - 1
-    spin_data[spin_mask, :] = +1
-    spin_data[:, :, :, : 0:4] = 0.
 
-    sphere = spin_data.astype(np.float32)
+    print("Constructing S4 Mapping")
     for _ in range(20):
-        sphere = evolve(sphere, 0.1)
-    sphere = np.array(sphere)
-    plt.imshow(sphere[:, :, size // 2, size // 2, -1])
-    plt.show()
-    print("init_cond complete")
-    solid_angle = get_solid_angle(sphere, use_one_simplex=False)
+        object = evolve(object, 0.1)
+    object = np.array(object)
+
+    print("Computing Solid angle")
+    solid_angle = get_solid_angle(object, use_one_simplex=False)
     print("n=", solid_angle.numpy(), "(Regularly computed topological number. This may provide a poor result.)")
     print("")
     print("Up-scaling technique started")
-    solid_angle_fine = get_solid_angle_fine(sphere, size=5, ratio=10, use_one_simplex=True)
+    solid_angle_fine = get_solid_angle_fine(object, size=5, ratio=10, use_one_simplex=True)
     print("")
     print("n=", solid_angle_fine.numpy(), "(Topological number computed from up-scaled spin configuration. It may provide a better result)")
-
