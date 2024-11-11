@@ -250,7 +250,7 @@ def get_S3_mask(size: int = 30):
     r = tf.norm(y_space, axis=-1)
     mask = tf.greater(maximum_distance, tf.abs(r - 1.))
     return mask
-def get_real_projective_plane_mask_4d(size: int = 30) -> Tuple[tf.Tensor, tf.Tensor]:
+def get_real_projective_plane_mask_4d(size: int = 30) -> tf.Tensor:
     """
     Implementation of real projective plane with embeded on 4D square lattice.
     """
@@ -284,8 +284,8 @@ def get_real_projective_plane_mask_4d(size: int = 30) -> Tuple[tf.Tensor, tf.Ten
     x_final = x_variable.read_value()
     distance_from_the_embedded_surface = tf.norm(embed_projective_plane(x_final) - y_space, axis=-1)
     mask = tf.cast(tf.greater(maximum_distance, distance_from_the_embedded_surface), tf.float32)
-    return
-def get_klein_bottle_mask_4d(size: int = 30) -> Tuple[tf.Tensor, tf.Tensor]:
+    return mask
+def get_klein_bottle_mask_4d(size: int = 30) -> tf.Tensor:
     space_limit = 1.5
     maximum_distance = space_limit * 4. / float(size - 1)
     y_space = tf.transpose(tf.meshgrid(*[tf.linspace(-space_limit, space_limit, size) for i in range(4)]), [1, 2, 3, 4, 0])
@@ -318,7 +318,7 @@ def get_object_from_mask(mask):
     full_mapping = tf.stack([tf.zeros_like(last_dim) for i in range(N)] + [last_dim], axis=-1)
     return full_mapping
 
-    
+
 if __name__ == "__main__":
     print("Constructing Object")
     mask = get_B4_mask() # B4 implemented in 4D square lattice
