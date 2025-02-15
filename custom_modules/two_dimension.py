@@ -47,7 +47,7 @@ def sum_nearist_neighbor(arr):
     return padded[2:, 1:-1] + padded[:-2, 1:-1] + padded[1:-1, 2:] + padded[1:-1, :-2]
 
 
-def evolve(arr, alpha=0.15):
+def evolve(arr, alpha=0.1):
     """
     :param arr: array of shape (height, width, 3)
     :return:  array of shape (height, width, 3)
